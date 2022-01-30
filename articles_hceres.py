@@ -38,6 +38,8 @@ fichier_personnel_with_neworcids="personnel orcids.xlsx"
 
 # liste des equipes
 liste_equipes=["BiosCiences", "Chirosciences",  "CTOM", "STeRéO"]
+periode_debut="2016"
+periode_fin="2021"
 
 # liste du type de personnel connu dans le fichier du personnel : en cle le type dans le fichier personnel et en valeur son role dans les publication HCERES
 dict_type_personnel={"permanent" : "permanent", 
@@ -256,7 +258,14 @@ for num_row in range(2, wos_num_rows_source + 1):
         author_lastname="" 
         author_firstname=""
         if ", " in author_fullname :
-            author_lastname, author_firstname= author_fullname.split(", ")
+            try :
+                author_lastname, author_firstname= author_fullname.split(", ")
+            except ValueError :
+                lignes_en_erreur.append((num_row, "Champ author_fullname malformé, impossible d'extraire les informations du token {},".format(author_fullname)))
+                values=author_fullname.split(", ")
+                author_lastname=values[0]
+                if len(values) > 1 :
+                    author_firstname=" ".join(values[1:])
         else :
             author_lastname = author_fullname
         formatted_authors_fullname= formatted_authors_fullname + comma + author_lastname.upper() + " " + author_firstname
@@ -384,7 +393,7 @@ if len (dict_labo_tous_orcids_decouverts) > 0 :
         else :
             xlsLine=list(row.values())
         listToSave.append(xlsLine) 
-    req_orcid_wos=req_orcid_wos+")"
+    req_orcid_wos=req_orcid_wos+") AND PY={}-{}".format(periode_debut,periode_fin)
     print ("requete sur ORCID pour WOS")
     print (req_orcid_wos)
     for i in range(len(listToSave)) :
@@ -415,7 +424,7 @@ hal_common_fields="docType_s,authLastName_s,authFirstName_s,label_s,title_s,jour
 hal_conf_fields="conferenceStartDate_s,conferenceTitle_s,conferenceEndDate_s,conferenceOrganizer_s,city_s,country_s"
 hal_book_fields="bookTitle_s,subTitle_s,isbn_s"
 hal_fields="{},{}".format(hal_common_fields, hal_conf_fields)
-hal_conditions="producedDateY_i:[2016 TO 2021]"
+hal_conditions="producedDateY_i:[{} TO {}]".format(periode_debut,periode_fin)
 hal_filters="structId_i:186403"
 #requete="https://api.archives-ouvertes.fr/search/UNIV-AMU/?q=*:*&wt=json&rows=10000&sort=producedDate_tdate%20desc&fl={}&fq={}"
 hal_requete="http://api.archives-ouvertes.fr/search/?q={}&wt=json&rows=10000&fl={}&fq={}".format(hal_conditions,hal_fields,hal_filters)
@@ -429,6 +438,7 @@ print ("nombre de documents trouves :", hal_number_of_docs, "- nombre de documen
 
 lst_doctype=[]
 hal_number_of_docs=[]
+req_doi_pour_wos=""
 for num_row, hal_doc in enumerate(hal_docs):
     # recuperations des champs et initialisation des variables
     # type document
@@ -511,6 +521,11 @@ for num_row, hal_doc in enumerate(hal_docs):
     
     titre_hash = unidecode.unidecode(article_title.translate(str.maketrans('','', string.punctuation + string.whitespace)).upper())
   
+    if doi != "" :
+        if req_doi_pour_wos != "" : 
+            req_doi_pour_wos = req_doi_pour_wos + " OR " + doi
+        else :
+            req_doi_pour_wos =  doi
     if (doi != "") and (doi in lst_wos_doi) :
         lignes_en_erreur.append((num_row, "HAL doi {} deja dans WOS, ignore l'enregistement HAL".format(doi)))
         continue
@@ -581,6 +596,9 @@ for num_row, hal_doc in enumerate(hal_docs):
   
 # affiche les logs hal
 displayErrors(lignes_en_erreur)
+
+# requete doi pour OS
+print ("requete DOI pour WOS si besoin : DO=({})" .format(req_doi_pour_wos))
 
 # FEUILLE EXCEL DE LA LISTE DES EQUIPES
 #inserer une feuille avec les equpes et leur numero
