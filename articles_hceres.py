@@ -76,7 +76,7 @@ colheader_openaccess= "Open Access Designations"
 col_header_datasource="datasource"
 
 # fichier cible  colonnes cible
-fichier_cible="articles_hceres.xlsx"
+fichier_cible="articles_hceres_{}_{}.xlsx".format(periode_debut, periode_fin)
 colheader_formatted_authors_fullname="Author Full Names pour HCERES"
 colheader_volume_issue="volume / issue"
 colheader_pages="Pages"
