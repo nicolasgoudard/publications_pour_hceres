@@ -387,7 +387,7 @@ if len (dict_labo_tous_orcids_decouverts) > 0 :
         if orcid :
             xlsLine=list(row.values())
             xlsLine.append(orcid)  
-            if row["type"] == "permanent":
+            if dict_type_personnel.get(row["type"]) == "permanent":
                 req_orcid_wos=req_orcid_wos+ separator + orcid
                 separator=" OR "
         else :
