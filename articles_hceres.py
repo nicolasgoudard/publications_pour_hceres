@@ -47,7 +47,8 @@ dict_type_personnel={"permanent" : "permanent",
                       "postdoc" : "permanent",
                       "ATER" : "permanent",
                       "Prof. année sab" : "permanent",
-                      "Prof. associé" : "permanent"} 
+                      "Prof. associé" : "permanent",
+                      "prof associé" : "permanent"} 
 
 colheader_publication_type="Publication Type"
 colheader_authors="Authors"
@@ -386,8 +387,10 @@ if len (dict_labo_tous_orcids_decouverts) > 0 :
         orcid=dict_labo_tous_orcids_decouverts.get((unidecode.unidecode(row["nom"].upper()), unidecode.unidecode(row["prenom"].upper())))
         if orcid :
             xlsLine=list(row.values())
-            xlsLine.append(orcid)  
-            if dict_type_personnel.get(row["type"]) == "permanent":
+            xlsLine.append(orcid)
+            # pour la requete ORCID on veut reellement les permanents pour ne pas risquer de prendre les publications 
+            # des non permanents qui n'etaient pas a l'ism2 dans la periode  
+            if row["type"] == "permanent":
                 req_orcid_wos=req_orcid_wos+ separator + orcid
                 separator=" OR "
         else :
