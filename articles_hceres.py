@@ -81,6 +81,7 @@ colheader_doi="DOI"
 colheader_ut="UT (Unique WOS ID)"
 colheader_openaccess= "Open Access Designations"
 col_header_datasource="datasource"
+col_header_source_id="source id"
 
 # fichier cible  colonnes cible
 fichier_cible="articles_hceres_{}_{}.xlsx".format(periode_debut, periode_fin)
@@ -93,9 +94,9 @@ colheader_corresponding_authors="premier, dernier ou correspoding auteur"
 colheader_formatted_openaccess = "Open Access"
 
 # colonnes crees pour le fichier cible 
-colheader_cible_art_ouv=[colheader_authors_fullname, colheader_article_title, colheader_source_title, colheader_volume_issue,colheader_pages, colheader_publication_annee, colheader_doi, colheader_interequipes, colheader_doctorant_coauteur, colheader_corresponding_authors,colheader_formatted_openaccess,col_header_datasource] 
-colheader_cible_conf=[colheader_authors_fullname, colheader_article_title, colheader_source_title, colheader_volume_issue,colheader_pages, colheader_publication_annee, colheader_doi, colheader_interequipes, colheader_conference_title, colheader_conference_date, colheader_doctorant_coauteur, colheader_corresponding_authors,colheader_formatted_openaccess,col_header_datasource] 
-colheader_cible_autre=[colheader_document_type, colheader_authors_fullname, colheader_article_title, colheader_source_title, colheader_volume_issue,colheader_pages, colheader_publication_annee, colheader_doi, colheader_interequipes, colheader_book_series_title, colheader_book_series_subtitle, colheader_isbn, colheader_conference_title, colheader_conference_date, colheader_doctorant_coauteur, colheader_corresponding_authors,colheader_formatted_openaccess,col_header_datasource] 
+colheader_cible_art_ouv=[colheader_authors_fullname, colheader_article_title, colheader_source_title, colheader_volume_issue,colheader_pages, colheader_publication_annee, colheader_doi, colheader_interequipes, colheader_doctorant_coauteur, colheader_corresponding_authors,colheader_formatted_openaccess,col_header_datasource,col_header_source_id] 
+colheader_cible_conf=[colheader_authors_fullname, colheader_article_title, colheader_source_title, colheader_volume_issue,colheader_pages, colheader_publication_annee, colheader_doi, colheader_interequipes, colheader_conference_title, colheader_conference_date, colheader_doctorant_coauteur, colheader_corresponding_authors,colheader_formatted_openaccess,col_header_datasource,col_header_source_id] 
+colheader_cible_autre=[colheader_document_type, colheader_authors_fullname, colheader_article_title, colheader_source_title, colheader_volume_issue,colheader_pages, colheader_publication_annee, colheader_doi, colheader_interequipes, colheader_book_series_title, colheader_book_series_subtitle, colheader_isbn, colheader_conference_title, colheader_conference_date, colheader_doctorant_coauteur, colheader_corresponding_authors,colheader_formatted_openaccess,col_header_datasource,col_header_source_id] 
 dict_colheaders_cible_by_sheetname={"articles" : colheader_cible_art_ouv,
                               "ouvrages" : colheader_cible_art_ouv,
                               "conferences":colheader_cible_conf,
@@ -232,8 +233,8 @@ lignes_en_erreur=[]
 dict_labo_tous_orcids_decouverts={}
 dict_labo_nouveaux_orcids_decouverts={}
 # liste des doi connus dans le wos, et des titres sans ponctuations ni espaces, qui serviront a dedoublonner wos et hal
-lst_wos_doi=[]
-lst_wos_hash=[]
+dict_wos_doi={}
+dict_wos_hash={}
 for num_row in range(2, wos_num_rows_source + 1):
     #print("traitement de la ligne", num_row)
     # sur chacune des lignes on recupere une liste d'auteurs nom prenom dans la cellule et on les parcourt
@@ -346,6 +347,8 @@ for num_row in range(2, wos_num_rows_source + 1):
     book_series_subtitle=wos_worksheet_source.cell(column=col_book_series_subtitle, row=num_row).value
     # isbn
     isbn=wos_worksheet_source.cell(column=col_isbn, row=num_row).value
+    # wos id 
+    ut=wos_worksheet_source.cell(column=col_ut, row=num_row).value
     
     titre_hash = unidecode.unidecode(titre_produit.translate(str.maketrans('','', string.punctuation + string.whitespace)).upper())
    
@@ -357,9 +360,9 @@ for num_row in range(2, wos_num_rows_source + 1):
     if not sheetname :
         sheetname="autre"
     # on affiche les colonnes dans le fichier cible. Les colonnes a afficher ne sont pas les memes selon le type de document
-    colvalues_cible_art_ouv=[formatted_authors_fullname,titre_produit,nom_revue_ou_pub,volume_issue,pages,annee,doi,formatted_interequipes,doctorant_coauteur,corresponding_author,openaccess,"WOS"]
-    colvalues_cible_conf=[formatted_authors_fullname,titre_produit,nom_revue_ou_pub,volume_issue,pages,annee,doi,formatted_interequipes,conference_title,conference_date,doctorant_coauteur,corresponding_author,openaccess,"WOS"]
-    colvalues_cible_autre=[document_type, formatted_authors_fullname,titre_produit,nom_revue_ou_pub,volume_issue,pages,annee,doi,formatted_interequipes, book_series_title, book_series_subtitle,isbn, conference_title,conference_date,doctorant_coauteur,corresponding_author,openaccess,"WOS"]
+    colvalues_cible_art_ouv=[formatted_authors_fullname,titre_produit,nom_revue_ou_pub,volume_issue,pages,annee,doi,formatted_interequipes,doctorant_coauteur,corresponding_author,openaccess, "WOS", ut ]
+    colvalues_cible_conf=[formatted_authors_fullname,titre_produit,nom_revue_ou_pub,volume_issue,pages,annee,doi,formatted_interequipes,conference_title,conference_date,doctorant_coauteur,corresponding_author,openaccess,"WOS",  ut]
+    colvalues_cible_autre=[document_type, formatted_authors_fullname,titre_produit,nom_revue_ou_pub,volume_issue,pages,annee,doi,formatted_interequipes, book_series_title, book_series_subtitle,isbn, conference_title,conference_date,doctorant_coauteur,corresponding_author,openaccess,"WOS", ut]
     dict_colvalues_cible_by_sheetname={"articles" : colvalues_cible_art_ouv,
                               "ouvrages" : colvalues_cible_art_ouv,
                               "conferences":colvalues_cible_conf,
@@ -370,9 +373,9 @@ for num_row in range(2, wos_num_rows_source + 1):
         workbook_cible[sheetname].cell(column= i + 1, row=num_rows_cible+1).value=colvalues_cibles[i]
     
     if doi != "" :
-        lst_wos_doi.append((sheetname, doi))
+        dict_wos_doi[(sheetname, doi)] = ut
     if titre_hash != "" :
-        lst_wos_hash.append((sheetname, titre_hash))
+        dict_wos_hash[(sheetname, titre_hash)] = ut
     
     
 # affiche les erreurs
@@ -558,7 +561,7 @@ for num_row, hal_doc in enumerate(hal_docs):
         for row in personnel:
             personnel_nom_upper=unidecode.unidecode(row["nom"].upper());
             personnel_prenom_upper=unidecode.unidecode(row["prenom"].upper())
-            if ((personnel_nom_upper == hal_doc["authLastName_s"][i].upper()) and (personnel_prenom_upper == hal_doc["authFirstName_s"][i].upper()))  or  ((personnel_nom_upper == hal_doc["authFirstName_s"][i].upper()) and (personnel_prenom_upper == hal_doc["authLastName_s"][i].upper())) :
+            if ((personnel_nom_upper == unidecode.unidecode(hal_doc["authLastName_s"][i].upper())) and (personnel_prenom_upper == unidecode.unidecode(hal_doc["authFirstName_s"][i].upper())))  or  ((personnel_nom_upper == unidecode.unidecode(hal_doc["authFirstName_s"][i].upper())) and (personnel_prenom_upper == unidecode.unidecode(hal_doc["authLastName_s"][i].upper()))) :
                 # assertion, l'auteur fait partie de l'ism2
                 type_personnel=dict_type_personnel.get(row["type"]);
                 if type_personnel=="permanent" :
@@ -592,18 +595,21 @@ for num_row, hal_doc in enumerate(hal_docs):
     if not sheetname :
         sheetname="autre"
     
+    # passe a l'enregistement suivant si la publi courante hal a deja ete extraite du WOS
     if sheetname != "autre" :
-        if (doi != "") and ( (sheetname, doi) in lst_wos_doi) :
-            lignes_en_erreur.append((num_row, "{}. HAL doi {} deja dans WOS, ignore l'enregistement HAL".format(halId, doi)))
+        ut=dict_wos_doi.get((sheetname, doi))
+        if (doi != "") and  ut :
+            lignes_en_erreur.append((num_row, "{}. HAL doi {} deja dans WOS (id={}), ignore l'enregistement HAL".format(halId, doi, ut)))
             continue
-        if (titre_produit != "") and ((sheetname, titre_hash) in lst_wos_hash):
-            lignes_en_erreur.append((num_row, "{}. HAL titre {} deja dans WOS, ignore l'enregistement HAL".format(halId, titre_produit)))
+        ut=dict_wos_hash.get((sheetname, doi))
+        if (titre_produit != "") and ut :
+            lignes_en_erreur.append((num_row, "{}. HAL titre {} deja dans WOS  (id={}), ignore l'enregistement HAL".format(halId, titre_produit, ut)))
             continue
     
     # on ajoute les colonnes demandes par l'HCERES 
-    colvalues_cible_art_ouv=[formatted_authors_fullname,article_title,journal,volume_issue,pages,annee,doi,formatted_interequipes,doctorant_coauteur,corresponding_author,openaccess,"HAL " + halId]
-    colvalues_cible_conf=[formatted_authors_fullname,article_title,journal,volume_issue,pages,annee,doi,formatted_interequipes,conference_title,conference_date,doctorant_coauteur,corresponding_author,openaccess,"HAL" + halId ]
-    colvalues_cible_autre=[doctype, formatted_authors_fullname,article_title,journal,volume_issue,pages,annee,doi,formatted_interequipes, book_title, subtitle, isbn, conference_title,conference_date,doctorant_coauteur,corresponding_author,openaccess,"HAL" + halId]
+    colvalues_cible_art_ouv=[formatted_authors_fullname,article_title,journal,volume_issue,pages,annee,doi,formatted_interequipes,doctorant_coauteur,corresponding_author,openaccess,"HAL " , halId]
+    colvalues_cible_conf=[formatted_authors_fullname,article_title,journal,volume_issue,pages,annee,doi,formatted_interequipes,conference_title,conference_date,doctorant_coauteur,corresponding_author,openaccess,"HAL",halId ]
+    colvalues_cible_autre=[doctype, formatted_authors_fullname,article_title,journal,volume_issue,pages,annee,doi,formatted_interequipes, book_title, subtitle, isbn, conference_title,conference_date,doctorant_coauteur,corresponding_author,openaccess,"HAL", halId]
     dict_colvalues_cible_by_sheetname={"articles" : colvalues_cible_art_ouv,
                                   "ouvrages" : colvalues_cible_art_ouv,
                                   "conferences":colvalues_cible_conf,
