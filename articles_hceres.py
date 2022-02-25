@@ -11,26 +11,32 @@ import openpyxl
 import numpy as np
 from tabulate import tabulate
 import pandas as pd
+from _ast import Or
 # TRAITE LE FICHIER EXCEL EXTRAIT DE WEB OF SCIENCE :
 # ON OUVRE LE FICHIER, ON Y AJOUTE  DES COLONNES DEMANDEES PAR L'HCERES 
 # ET ON LE SAUVE SOUS UN AUTRE NOM
 
-# PREREQUIS :  Sortir  un fichier excel de Web OF Sciences 
+# PROCEDURE :  
+# - Obtenir la liste du personnel au format csv : type, nom, prenom, equipe, orcid
+# - Sortir  un fichier excel de Web OF Sciences 
 # Acceder a WOS depuis l'ENT / Ressource selectroniques / Revues de A-Z   / WOS / Nouvelle Version
 # Aller dans Advanced Search
 # Requete 
 # AD=((Inst Sci Mol Marseille OR ISM2 OR 7313 OR UMR7313 OR 6263 OR UMR6263  OR "ism 2" ) same (marseille or aix))
 # AND PY=2016-2021
-# ON La croise avec une requete  de  HAL-AMU (acceder par ent) / CONSULTER Par Laboratoire d'aMU / institut des sciences moleculaires de marseille
-# / Selectioner les annees / puis  Outils / Export avance / Faire glisser les champs autre que Identifiant DOI vers la gauche
-# Preparer l'export / Telecharger l'export
-#  Traiter la liste des DOI sous WORD : remplacer les marques de fin de paragraphe (^p) par OR et entourer par : DO=( ... ) 
-# faire une requete avec ces DOI dans WOS, revenir dans advanced search combiner les deux requetes avec OR
-# cliquez sur le nombre de resultats de la requete resultante 
-# de meme, possiblite de fusionner avec les ORCID des checheurs ( sous WOS, requete AI= ( XXX OR YYYY OR ...) AND PY=2016-2021 ) 
 # cliquer sur EXPORT / Excel /  Record From= Nombre exact de resultats Record Content = Full Record 
-# Ouvrir le fichier excel et enregister au format XLSX : articles_source.xlsx
-#Pour connaitre les pubs hal dans le WOS non affilées à l'ism2 mais étant en fait ism2 : DOI hal (2)  not IN ISM2 (1) : publi  dans HAL pas affilé à ISM2
+# Ouvrir le fichier excel et enregister au format XLSX : articles_original.xlsx
+# - Corriger les variables dans le script : liste_equipe et periode notamment
+# - lancer le script une premiere fois : python3 articles_hceres.py
+# - Dans le output recuperer les requetes DOI et AD (orcid) pour le WOS
+# - Nous allons pouvoir obtenir un résultat plus précis avec le WOS
+# Retourner dans WOS advanced search, faire une requete pour DOI puis pour AD, 
+# Revenir dans Advaced Search et combiner les trois requetes avec OR
+# Puis cliquez sur le nombre de resultats de la requete resultante 
+# Telecharger un fichier articles_original.xlsx
+# - Repasser le script 
+# - Enfin récuperer les resultats finaux : aticles_hceres_2016_2021.xls
+# Astuce : Pour connaitre les pubs hal dans le WOS non affilées à l'ism2 mais étant en fait ism2 : DOI hal (2)  not IN ISM2 (1) : publi  dans HAL pas affilé à ISM2
 
 # fichier / colonne d'origine WOS
 fichier_wos_source="articles_original.xlsx"
@@ -278,7 +284,7 @@ for num_row in range(2, wos_num_rows_source + 1):
         for row in personnel:
             personnel_nom_upper=unidecode.unidecode(row["nom"].upper());
             personnel_prenom_upper=unidecode.unidecode(row["prenom"].upper())
-            if (personnel_nom_upper == author_lastname.upper()) and (personnel_prenom_upper == author_firstname.upper()) :
+            if ( (personnel_nom_upper == author_lastname.upper())  and (personnel_prenom_upper == author_firstname.upper() ) ) or  ((personnel_nom_upper == author_firstname.upper()) and (personnel_prenom_upper == author_lastname.upper()) ) :
                 # assertion, l'auteur fait partie de l'ism2
                 type_personnel=dict_type_personnel.get(row["type"]);
                 if type_personnel =="permanent" :
@@ -364,9 +370,9 @@ for num_row in range(2, wos_num_rows_source + 1):
         workbook_cible[sheetname].cell(column= i + 1, row=num_rows_cible+1).value=colvalues_cibles[i]
     
     if doi != "" :
-        lst_wos_doi.append(doi)
+        lst_wos_doi.append((sheetname, doi))
     if titre_hash != "" :
-        lst_wos_hash.append(titre_hash)
+        lst_wos_hash.append((sheetname, titre_hash))
     
     
 # affiche les erreurs
@@ -423,7 +429,7 @@ dict_sheetname_by_hal_doctype={ "ART":"articles",
                   "COUV" : "ouvrages",
                   "COMM" : "conferences"}
 
-hal_common_fields="docType_s,authLastName_s,authFirstName_s,label_s,title_s,journalTitle_s,producedDate_tdate,producedDateY_i,volume_s,issue_s,page_s,doiId_s,label_xml,file_main,halId_s,files_s,linkExtUrl_s"
+hal_common_fields="halId_s,docType_s,authLastName_s,authFirstName_s,label_s,title_s,journalTitle_s,producedDate_tdate,producedDateY_i,volume_s,issue_s,page_s,doiId_s,label_xml,file_main,halId_s,files_s,linkExtUrl_s"
 hal_conf_fields="conferenceStartDate_s,conferenceTitle_s,conferenceEndDate_s,conferenceOrganizer_s,city_s,country_s"
 hal_book_fields="bookTitle_s,subTitle_s,isbn_s"
 hal_fields="{},{}".format(hal_common_fields, hal_conf_fields)
@@ -444,6 +450,13 @@ hal_number_of_docs=[]
 req_doi_pour_wos=""
 for num_row, hal_doc in enumerate(hal_docs):
     # recuperations des champs et initialisation des variables
+    
+    # halId
+    if "halId_s" in hal_doc:
+        halId=hal_doc["halId_s"]
+    else :
+        halId=""
+        
     # type document
     if "docType_s" in hal_doc:
         doctype=hal_doc["docType_s"]
@@ -529,12 +542,7 @@ for num_row, hal_doc in enumerate(hal_docs):
             req_doi_pour_wos = req_doi_pour_wos + " OR " + doi
         else :
             req_doi_pour_wos =  doi
-    if (doi != "") and (doi in lst_wos_doi) :
-        lignes_en_erreur.append((num_row, "HAL doi {} deja dans WOS, ignore l'enregistement HAL".format(doi)))
-        continue
-    if (titre_produit != "") and (titre_hash in lst_wos_hash):
-        lignes_en_erreur.append((num_row, "HAL titre {} deja dans WOS, ignore l'enregistement HAL".format(titre_produit)))
-        continue
+
 
     # on parcourt le tableau hal de noms et celui de prenoms pour en faire une chaine formatee pour hceres
     # NOM1 Prenom1, NOM2, Prenom2, etc... on determine aussi les equipes qui ont colaboree, en fonction des auteurs
@@ -550,7 +558,7 @@ for num_row, hal_doc in enumerate(hal_docs):
         for row in personnel:
             personnel_nom_upper=unidecode.unidecode(row["nom"].upper());
             personnel_prenom_upper=unidecode.unidecode(row["prenom"].upper())
-            if (personnel_nom_upper == hal_doc["authLastName_s"][i].upper()) and (personnel_prenom_upper == hal_doc["authFirstName_s"][i].upper()) :
+            if ((personnel_nom_upper == hal_doc["authLastName_s"][i].upper()) and (personnel_prenom_upper == hal_doc["authFirstName_s"][i].upper()))  or  ((personnel_nom_upper == hal_doc["authFirstName_s"][i].upper()) and (personnel_prenom_upper == hal_doc["authLastName_s"][i].upper())) :
                 # assertion, l'auteur fait partie de l'ism2
                 type_personnel=dict_type_personnel.get(row["type"]);
                 if type_personnel=="permanent" :
@@ -584,10 +592,18 @@ for num_row, hal_doc in enumerate(hal_docs):
     if not sheetname :
         sheetname="autre"
     
+    if sheetname != "autre" :
+        if (doi != "") and ( (sheetname, doi) in lst_wos_doi) :
+            lignes_en_erreur.append((num_row, "{}. HAL doi {} deja dans WOS, ignore l'enregistement HAL".format(halId, doi)))
+            continue
+        if (titre_produit != "") and ((sheetname, titre_hash) in lst_wos_hash):
+            lignes_en_erreur.append((num_row, "{}. HAL titre {} deja dans WOS, ignore l'enregistement HAL".format(halId, titre_produit)))
+            continue
+    
     # on ajoute les colonnes demandes par l'HCERES 
-    colvalues_cible_art_ouv=[formatted_authors_fullname,article_title,journal,volume_issue,pages,annee,doi,formatted_interequipes,doctorant_coauteur,corresponding_author,openaccess,"HAL"]
-    colvalues_cible_conf=[formatted_authors_fullname,article_title,journal,volume_issue,pages,annee,doi,formatted_interequipes,conference_title,conference_date,doctorant_coauteur,corresponding_author,openaccess,"HAL"]
-    colvalues_cible_autre=[doctype, formatted_authors_fullname,article_title,journal,volume_issue,pages,annee,doi,formatted_interequipes, book_title, subtitle, isbn, conference_title,conference_date,doctorant_coauteur,corresponding_author,openaccess,"HAL"]
+    colvalues_cible_art_ouv=[formatted_authors_fullname,article_title,journal,volume_issue,pages,annee,doi,formatted_interequipes,doctorant_coauteur,corresponding_author,openaccess,"HAL " + halId]
+    colvalues_cible_conf=[formatted_authors_fullname,article_title,journal,volume_issue,pages,annee,doi,formatted_interequipes,conference_title,conference_date,doctorant_coauteur,corresponding_author,openaccess,"HAL" + halId ]
+    colvalues_cible_autre=[doctype, formatted_authors_fullname,article_title,journal,volume_issue,pages,annee,doi,formatted_interequipes, book_title, subtitle, isbn, conference_title,conference_date,doctorant_coauteur,corresponding_author,openaccess,"HAL" + halId]
     dict_colvalues_cible_by_sheetname={"articles" : colvalues_cible_art_ouv,
                                   "ouvrages" : colvalues_cible_art_ouv,
                                   "conferences":colvalues_cible_conf,
