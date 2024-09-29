@@ -56,6 +56,7 @@ dict_type_personnel={"permanent" : "permanent",
                       "Prof. associé" : "permanent",
                       "prof associé" : "permanent"} 
 
+# colones du fichier export d'origine WOS
 colheader_publication_type="Publication Type"
 colheader_authors="Authors"
 colheader_authors_fullname="Author Full Names"
@@ -169,6 +170,7 @@ with open('personnel.csv', newline='\n', encoding="utf-8-sig", errors='ignore') 
 df = pd.DataFrame(data=personnel)
 print(tabulate(df, headers='keys', tablefmt='psql', showindex=False))
 
+# remplit un tableau avec les lignes en erreur du fichier du personnel puis affiche ce tableau
 ligne = 1
 lignes_en_erreur=[]
 print ("lignes en erreur dans le fichier du personnel ")
