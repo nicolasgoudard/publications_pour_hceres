@@ -382,7 +382,7 @@ for num_row in range(2, wos_num_rows_source + 1):
 displayErrors(lignes_en_erreur)
 
 if len (dict_labo_tous_orcids_decouverts) > 0 : 
-    # On complemete le fichier excel du personnel avec leur orcid decouverts 
+    # On complete le fichier excel du personnel avec leur orcid decouverts 
     # Pour cela on cree une liste a partir du dictionnaire personnel, a laquelle on rajoute les orcid pour chacun des agents
     # et ensuite on cree un nouveau fichier excel a partir de cette liste 
     # on construit aussi la requete WOS sur les orcids mais uniquement pour les permanents
@@ -425,8 +425,8 @@ if len (dict_labo_nouveaux_orcids_decouverts) > 0 :
     print(tabulate(df, headers=("nom prénom", "orcid"), tablefmt='psql', showindex=False))
     
 # ICI COMMENCE LE SCRIPT HAL  
-# association type de document WOS => feuille cible 
 lignes_en_erreur=[]
+# association type de document WOS => feuille cible 
 dict_sheetname_by_hal_doctype={ "ART":"articles", 
                   "OUV": "ouvrages",
                   "COUV" : "ouvrages",
@@ -572,7 +572,7 @@ for num_row, hal_doc in enumerate(hal_docs):
                 if (i==0) or (i==(len(hal_doc["authLastName_s"]) -1)) :
                     corresponding_author="O"
     
-    #s'il ya plus d'une equipe dans la liste interequipe dedoublonee, on enregistre une colaboration interequipe
+    #s'il y a plus d'une equipe dans la liste interequipe dedoublonee, on enregistre une colaboration interequipe
     formatted_interequipes=""
     comma=""
     for equipe in interequipe :
